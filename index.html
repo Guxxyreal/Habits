@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Habits" />
   <title>Habits</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; background: #0d0d0d; color: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
@@ -25,6 +25,9 @@
     }
     .page { display: none; }
     .page.active { display: block; }
+    input[type=number] { -moz-appearance: textfield; }
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   </style>
 </head>
 <body>
@@ -147,11 +150,11 @@ const LEVELS = [
 
 function todayStr() {
   const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
 }
 
 function isTrainingDay() {
-  return TRAINING_DAYS.includes(new Date().getDay());
+  return TRAINING_DAYS.indexOf(new Date().getDay()) !== -1;
 }
 
 function loadState() {
@@ -162,17 +165,17 @@ function saveState(s) {
   try { localStorage.setItem('habitState', JSON.stringify(s)); } catch(e) {}
 }
 
-let state = loadState() || {
+var state = loadState() || {
   today: todayStr(), checked: {}, streak: 0,
   wasTrainingDay: isTrainingDay(), trainingLevel: 0, levelSessions: 0,
-  exerciseInputs: {},
+  exerciseInputs: {}
 };
 
 function checkDayRollover() {
-  const today = todayStr();
+  var today = todayStr();
   if (state.today !== today) {
-    const activeIds = HABITS.filter(h => !h.trainingOnly || state.wasTrainingDay).map(h => h.id);
-    const allDone = activeIds.length > 0 && activeIds.every(id => state.checked[id]);
+    var activeIds = HABITS.filter(function(h) { return !h.trainingOnly || state.wasTrainingDay; }).map(function(h) { return h.id; });
+    var allDone = activeIds.length > 0 && activeIds.every(function(id) { return state.checked[id]; });
     state.streak = allDone ? state.streak + 1 : 0;
     state.today = today;
     state.checked = {};
@@ -184,7 +187,8 @@ function checkDayRollover() {
 }
 
 function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  var pages = document.querySelectorAll('.page');
+  for (var i = 0; i < pages.length; i++) pages[i].classList.remove('active');
   document.getElementById('page-' + name).classList.add('active');
   if (name === 'training') renderTraining();
 }
@@ -197,58 +201,51 @@ function toggleHabit(id) {
 }
 
 function renderHabits() {
-  const today = new Date();
-  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('date-label').textContent = `${dayNames[today.getDay()].toUpperCase()}, ${monthNames[today.getMonth()].toUpperCase()} ${today.getDate()}`;
+  var today = new Date();
+  var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('date-label').textContent = dayNames[today.getDay()].toUpperCase() + ', ' + monthNames[today.getMonth()].toUpperCase() + ' ' + today.getDate();
   document.getElementById('streak-count').textContent = state.streak;
 
-  const visibleHabits = HABITS.filter(h => !h.trainingOnly || isTrainingDay());
-  document.getElementById('habits-list').innerHTML = visibleHabits.map(h => {
-    const done = !!state.checked[h.id];
-    return `
-      <div onclick="toggleHabit('${h.id}')" style="
-        display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:8px;
-        background:${done ? 'var(--red-bg)' : 'var(--surface2)'};
-        border:1px solid ${done ? 'var(--red-border)' : 'var(--border)'};
-        border-radius:12px;cursor:pointer;">
-        <div style="width:36px;height:36px;border-radius:50%;background:${done ? 'var(--red)' : 'var(--surface3)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <i class="ti ${done ? 'ti-check' : h.icon}" style="font-size:18px;color:${done ? '#fff' : 'var(--text-muted)'};" aria-hidden="true"></i>
-        </div>
-        <span style="font-size:16px;color:${done ? 'var(--text)' : 'var(--text-muted)'};flex:1;">${h.label}</span>
-        ${h.id === 'training' ? `<i class="ti ti-chevron-right" style="font-size:16px;color:var(--text-dim);" aria-hidden="true"></i>` : ''}
-      </div>`;
-  }).join('');
+  var visibleHabits = HABITS.filter(function(h) { return !h.trainingOnly || isTrainingDay(); });
+  var html = '';
+  for (var i = 0; i < visibleHabits.length; i++) {
+    var h = visibleHabits[i];
+    var done = !!state.checked[h.id];
+    html += '<div onclick="toggleHabit(\'' + h.id + '\')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:8px;background:' + (done ? 'var(--red-bg)' : 'var(--surface2)') + ';border:1px solid ' + (done ? 'var(--red-border)' : 'var(--border)') + ';border-radius:12px;cursor:pointer;">';
+    html += '<div style="width:36px;height:36px;border-radius:50%;background:' + (done ? 'var(--red)' : 'var(--surface3)') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
+    html += '<i class="ti ' + (done ? 'ti-check' : h.icon) + '" style="font-size:18px;color:' + (done ? '#fff' : 'var(--text-muted)') + ';" aria-hidden="true"></i></div>';
+    html += '<span style="font-size:16px;color:' + (done ? 'var(--text)' : 'var(--text-muted)') + ';flex:1;">' + h.label + '</span>';
+    if (h.id === 'training') html += '<i class="ti ti-chevron-right" style="font-size:16px;color:var(--text-dim);" aria-hidden="true"></i>';
+    html += '</div>';
+  }
+  document.getElementById('habits-list').innerHTML = html;
 }
 
 function renderTraining() {
-  document.getElementById('training-level-title').textContent = `Level ${state.trainingLevel + 1}`;
-  const progress = Math.min(state.levelSessions, LEVEL_UP_THRESHOLD);
+  document.getElementById('training-level-title').textContent = 'Level ' + (state.trainingLevel + 1);
+  var progress = Math.min(state.levelSessions, LEVEL_UP_THRESHOLD);
   document.getElementById('level-progress-bar').style.width = (progress / LEVEL_UP_THRESHOLD * 100) + '%';
-  document.getElementById('level-progress-text').textContent = `${progress} / ${LEVEL_UP_THRESHOLD}`;
+  document.getElementById('level-progress-text').textContent = progress + ' / ' + LEVEL_UP_THRESHOLD;
 
-  const level = LEVELS[state.trainingLevel];
-  document.getElementById('exercises-list').innerHTML = level.exercises.map(ex => {
-    const val = state.exerciseInputs[ex.id] || '';
-    const met = parseInt(val) >= ex.sets;
-    return `
-      <div style="background:var(--surface2);border:1px solid ${met ? 'var(--red-border)' : 'var(--border)'};border-radius:12px;padding:14px 16px;margin-bottom:8px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div>
-            <div style="font-size:15px;font-weight:500;color:var(--text);">${ex.name}</div>
-            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${ex.sets} sets × ${ex.reps} ${ex.unit}</div>
-          </div>
-          ${met ? `<i class="ti ti-check" style="font-size:20px;color:var(--red);" aria-hidden="true"></i>` : ''}
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <input type="number" min="0" max="${ex.sets}" placeholder="Sets completed"
-            value="${val}"
-            oninput="updateExercise('${ex.id}', this.value)"
-            style="flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:15px;outline:none;"/>
-          <span style="font-size:13px;color:var(--text-muted);white-space:nowrap;">/ ${ex.sets} sets</span>
-        </div>
-      </div>`;
-  }).join('');
+  var level = LEVELS[state.trainingLevel];
+  var html = '';
+  for (var i = 0; i < level.exercises.length; i++) {
+    var ex = level.exercises[i];
+    var val = state.exerciseInputs[ex.id] || '';
+    var met = parseInt(val) >= ex.sets;
+    html += '<div style="background:var(--surface2);border:1px solid ' + (met ? 'var(--red-border)' : 'var(--border)') + ';border-radius:12px;padding:14px 16px;margin-bottom:8px;">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+    html += '<div><div style="font-size:15px;font-weight:500;color:var(--text);">' + ex.name + '</div>';
+    html += '<div style="font-size:12px;color:var(--text-muted);margin-top:2px;">' + ex.sets + ' sets \u00d7 ' + ex.reps + ' ' + ex.unit + '</div></div>';
+    if (met) html += '<i class="ti ti-check" style="font-size:20px;color:var(--red);" aria-hidden="true"></i>';
+    html += '</div>';
+    html += '<div style="display:flex;align-items:center;gap:10px;">';
+    html += '<input type="number" min="0" max="' + ex.sets + '" placeholder="Sets completed" value="' + val + '" oninput="updateExercise(\'' + ex.id + '\', this.value)" style="flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:15px;outline:none;"/>';
+    html += '<span style="font-size:13px;color:var(--text-muted);white-space:nowrap;">/ ' + ex.sets + ' sets</span>';
+    html += '</div></div>';
+  }
+  document.getElementById('exercises-list').innerHTML = html;
 }
 
 function updateExercise(id, val) {
@@ -258,8 +255,8 @@ function updateExercise(id, val) {
 }
 
 function confirmTraining() {
-  const level = LEVELS[state.trainingLevel];
-  const allMet = level.exercises.every(ex => parseInt(state.exerciseInputs[ex.id] || '0') >= ex.sets);
+  var level = LEVELS[state.trainingLevel];
+  var allMet = level.exercises.every(function(ex) { return parseInt(state.exerciseInputs[ex.id] || '0') >= ex.sets; });
   if (allMet) {
     state.levelSessions++;
     if (state.levelSessions >= LEVEL_UP_THRESHOLD && state.trainingLevel < LEVELS.length - 1) {
@@ -267,7 +264,7 @@ function confirmTraining() {
       state.levelSessions = 0;
       state.checked['training'] = true;
       saveState(state);
-      document.getElementById('levelup-title').textContent = `Level ${state.trainingLevel + 1} unlocked`;
+      document.getElementById('levelup-title').textContent = 'Level ' + (state.trainingLevel + 1) + ' unlocked';
       showPage('levelup');
       return;
     }
@@ -279,6 +276,7 @@ function confirmTraining() {
 }
 
 function render() { renderHabits(); }
+
 setInterval(checkDayRollover, 15000);
 checkDayRollover();
 showPage('habits');
