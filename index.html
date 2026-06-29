@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0d0d0d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Habits" />
+  <title>Habits</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: #0d0d0d; color: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    :root {
+      --red: #ff2233;
+      --red-bg: #1a0608;
+      --red-border: #3d0a0e;
+      --surface2: #1c1c1c;
+      --surface3: #242424;
+      --border: rgba(255,255,255,0.08);
+      --text: #f0f0f0;
+      --text-muted: #888;
+      --text-dim: #555;
+    }
+    .page { display: none; }
+    .page.active { display: block; }
+  </style>
+</head>
+<body>
+
+<div id="app" style="max-width:420px;margin:0 auto;min-height:100vh;background:#0d0d0d;padding:0 0 80px;">
+
+  <div id="page-habits" class="page">
+    <div style="padding:20px 16px 12px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:13px;color:var(--text-muted);letter-spacing:0.04em;" id="date-label">TODAY</div>
+        <div style="font-size:22px;font-weight:500;color:var(--text);">Daily habits</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">current streak</div>
+        <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+          <i class="ti ti-flame" style="font-size:20px;color:var(--red);" aria-hidden="true"></i>
+          <span style="font-size:28px;font-weight:500;color:var(--red);" id="streak-count">0</span>
+          <span style="font-size:13px;color:var(--text-muted);">days</span>
+        </div>
+      </div>
+    </div>
+    <div style="padding:0 16px;" id="habits-list"></div>
+  </div>
+
+  <div id="page-training" class="page">
+    <div style="padding:20px 16px 12px;display:flex;align-items:center;gap:12px;">
+      <button onclick="showPage('habits')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;display:flex;align-items:center;">
+        <i class="ti ti-arrow-left" style="font-size:20px;" aria-hidden="true"></i>
+      </button>
+      <div>
+        <div style="font-size:13px;color:var(--text-muted);">training session</div>
+        <div style="font-size:20px;font-weight:500;" id="training-level-title">Level 1</div>
+      </div>
+    </div>
+    <div style="padding:0 16px 16px;">
+      <div style="background:var(--red-bg);border:1px solid var(--red-border);border-radius:12px;padding:12px 16px;margin-bottom:16px;">
+        <div style="font-size:11px;color:var(--red);letter-spacing:0.06em;margin-bottom:8px;">LEVEL UP PROGRESS</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="flex:1;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;">
+            <div id="level-progress-bar" style="height:100%;background:var(--red);border-radius:3px;transition:width 0.4s;width:0%;"></div>
+          </div>
+          <span style="font-size:13px;color:var(--text-muted);white-space:nowrap;" id="level-progress-text">0 / 3</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">Complete all exercises 3 sessions to level up</div>
+      </div>
+      <div id="exercises-list"></div>
+      <button onclick="confirmTraining()" style="width:100%;margin-top:8px;padding:14px;background:var(--red);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;">
+        Confirm session
+      </button>
+    </div>
+  </div>
+
+  <div id="page-levelup" class="page">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px;text-align:center;">
+      <div style="width:80px;height:80px;background:var(--red-bg);border:2px solid var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:24px;">
+        <i class="ti ti-trophy" style="font-size:36px;color:var(--red);" aria-hidden="true"></i>
+      </div>
+      <div style="font-size:13px;color:var(--red);letter-spacing:0.08em;margin-bottom:8px;">LEVEL UP</div>
+      <div style="font-size:28px;font-weight:500;margin-bottom:8px;" id="levelup-title">Level 2 unlocked</div>
+      <div style="font-size:15px;color:var(--text-muted);margin-bottom:32px;">You've mastered the previous level. Time to push harder.</div>
+      <button onclick="showPage('habits')" style="padding:14px 32px;background:var(--red);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;">
+        Let's go
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const HABITS = [
+  { id: 'shower', label: 'Shower', icon: 'ti-droplet' },
+  { id: 'room', label: 'Clean room', icon: 'ti-home' },
+  { id: 'laundry', label: 'Laundry', icon: 'ti-shirt' },
+  { id: 'dishes', label: 'Dishes', icon: 'ti-tools-kitchen-2' },
+  { id: 'teeth', label: 'Brush teeth', icon: 'ti-mood-smile' },
+  { id: 'sleep', label: 'Sleep on time', icon: 'ti-moon' },
+  { id: 'training', label: 'Training', icon: 'ti-barbell', trainingOnly: true },
+];
+
+const TRAINING_DAYS = [1, 3, 5];
+const LEVEL_UP_THRESHOLD = 3;
+
+const LEVELS = [
+  { name: 'Level 1', exercises: [
+    { id: 'table_rows', name: 'Table rows', sets: 3, reps: 8, unit: 'reps' },
+    { id: 'knee_pushups', name: 'Knee pushups', sets: 3, reps: 10, unit: 'reps' },
+    { id: 'plank', name: 'Plank (forearms)', sets: 3, reps: 20, unit: 'sec' },
+    { id: 'glute_bridge', name: 'Glute bridge', sets: 3, reps: 12, unit: 'reps' },
+    { id: 'dead_bug', name: 'Dead bug', sets: 3, reps: 6, unit: 'each side' },
+  ]},
+  { name: 'Level 2', exercises: [
+    { id: 'table_rows', name: 'Table rows', sets: 3, reps: 12, unit: 'reps' },
+    { id: 'pushups', name: 'Full pushups', sets: 3, reps: 8, unit: 'reps' },
+    { id: 'plank', name: 'Plank (forearms)', sets: 3, reps: 40, unit: 'sec' },
+    { id: 'glute_bridge', name: 'Glute bridge', sets: 3, reps: 15, unit: 'reps' },
+    { id: 'dead_bug', name: 'Dead bug', sets: 3, reps: 10, unit: 'each side' },
+  ]},
+  { name: 'Level 3', exercises: [
+    { id: 'table_rows', name: 'Table rows', sets: 3, reps: 15, unit: 'reps' },
+    { id: 'pushups', name: 'Pushups', sets: 3, reps: 15, unit: 'reps' },
+    { id: 'plank', name: 'Plank (forearms)', sets: 3, reps: 60, unit: 'sec' },
+    { id: 'single_glute', name: 'Single leg glute bridge', sets: 3, reps: 10, unit: 'each' },
+    { id: 'hollow', name: 'Hollow body hold', sets: 3, reps: 20, unit: 'sec' },
+  ]},
+  { name: 'Level 4', exercises: [
+    { id: 'pullup_neg', name: 'Pullup negatives', sets: 3, reps: 4, unit: 'reps' },
+    { id: 'pushups', name: 'Pushups', sets: 3, reps: 20, unit: 'reps' },
+    { id: 'hollow', name: 'Hollow body hold', sets: 3, reps: 40, unit: 'sec' },
+    { id: 'pike_pushup', name: 'Pike pushups', sets: 3, reps: 8, unit: 'reps' },
+    { id: 'hang_knee', name: 'Hanging knee raises', sets: 3, reps: 8, unit: 'reps' },
+  ]},
+  { name: 'Level 5', exercises: [
+    { id: 'pullups', name: 'Pullups', sets: 3, reps: 5, unit: 'reps' },
+    { id: 'pushups', name: 'Pushups', sets: 3, reps: 25, unit: 'reps' },
+    { id: 'hang_knee', name: 'Hanging knee raises', sets: 3, reps: 12, unit: 'reps' },
+    { id: 'pike_pushup', name: 'Pike pushups', sets: 3, reps: 12, unit: 'reps' },
+    { id: 'hollow', name: 'Hollow body hold', sets: 3, reps: 60, unit: 'sec' },
+  ]},
+];
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+function isTrainingDay() {
+  return TRAINING_DAYS.includes(new Date().getDay());
+}
+
+function loadState() {
+  try { const r = localStorage.getItem('habitState'); return r ? JSON.parse(r) : null; } catch(e) { return null; }
+}
+
+function saveState(s) {
+  try { localStorage.setItem('habitState', JSON.stringify(s)); } catch(e) {}
+}
+
+let state = loadState() || {
+  today: todayStr(), checked: {}, streak: 0,
+  wasTrainingDay: isTrainingDay(), trainingLevel: 0, levelSessions: 0,
+  exerciseInputs: {},
+};
+
+function checkDayRollover() {
+  const today = todayStr();
+  if (state.today !== today) {
+    const activeIds = HABITS.filter(h => !h.trainingOnly || state.wasTrainingDay).map(h => h.id);
+    const allDone = activeIds.length > 0 && activeIds.every(id => state.checked[id]);
+    state.streak = allDone ? state.streak + 1 : 0;
+    state.today = today;
+    state.checked = {};
+    state.exerciseInputs = {};
+    state.wasTrainingDay = isTrainingDay();
+    saveState(state);
+    render();
+  }
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (name === 'training') renderTraining();
+}
+
+function toggleHabit(id) {
+  if (id === 'training') { showPage('training'); return; }
+  state.checked[id] = !state.checked[id];
+  saveState(state);
+  renderHabits();
+}
+
+function renderHabits() {
+  const today = new Date();
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('date-label').textContent = `${dayNames[today.getDay()].toUpperCase()}, ${monthNames[today.getMonth()].toUpperCase()} ${today.getDate()}`;
+  document.getElementById('streak-count').textContent = state.streak;
+
+  const visibleHabits = HABITS.filter(h => !h.trainingOnly || isTrainingDay());
+  document.getElementById('habits-list').innerHTML = visibleHabits.map(h => {
+    const done = !!state.checked[h.id];
+    return `
+      <div onclick="toggleHabit('${h.id}')" style="
+        display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:8px;
+        background:${done ? 'var(--red-bg)' : 'var(--surface2)'};
+        border:1px solid ${done ? 'var(--red-border)' : 'var(--border)'};
+        border-radius:12px;cursor:pointer;">
+        <div style="width:36px;height:36px;border-radius:50%;background:${done ? 'var(--red)' : 'var(--surface3)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="ti ${done ? 'ti-check' : h.icon}" style="font-size:18px;color:${done ? '#fff' : 'var(--text-muted)'};" aria-hidden="true"></i>
+        </div>
+        <span style="font-size:16px;color:${done ? 'var(--text)' : 'var(--text-muted)'};flex:1;">${h.label}</span>
+        ${h.id === 'training' ? `<i class="ti ti-chevron-right" style="font-size:16px;color:var(--text-dim);" aria-hidden="true"></i>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function renderTraining() {
+  document.getElementById('training-level-title').textContent = `Level ${state.trainingLevel + 1}`;
+  const progress = Math.min(state.levelSessions, LEVEL_UP_THRESHOLD);
+  document.getElementById('level-progress-bar').style.width = (progress / LEVEL_UP_THRESHOLD * 100) + '%';
+  document.getElementById('level-progress-text').textContent = `${progress} / ${LEVEL_UP_THRESHOLD}`;
+
+  const level = LEVELS[state.trainingLevel];
+  document.getElementById('exercises-list').innerHTML = level.exercises.map(ex => {
+    const val = state.exerciseInputs[ex.id] || '';
+    const met = parseInt(val) >= ex.sets;
+    return `
+      <div style="background:var(--surface2);border:1px solid ${met ? 'var(--red-border)' : 'var(--border)'};border-radius:12px;padding:14px 16px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div>
+            <div style="font-size:15px;font-weight:500;color:var(--text);">${ex.name}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${ex.sets} sets × ${ex.reps} ${ex.unit}</div>
+          </div>
+          ${met ? `<i class="ti ti-check" style="font-size:20px;color:var(--red);" aria-hidden="true"></i>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="number" min="0" max="${ex.sets}" placeholder="Sets completed"
+            value="${val}"
+            oninput="updateExercise('${ex.id}', this.value)"
+            style="flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:15px;outline:none;"/>
+          <span style="font-size:13px;color:var(--text-muted);white-space:nowrap;">/ ${ex.sets} sets</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function updateExercise(id, val) {
+  state.exerciseInputs[id] = val;
+  saveState(state);
+  renderTraining();
+}
+
+function confirmTraining() {
+  const level = LEVELS[state.trainingLevel];
+  const allMet = level.exercises.every(ex => parseInt(state.exerciseInputs[ex.id] || '0') >= ex.sets);
+  if (allMet) {
+    state.levelSessions++;
+    if (state.levelSessions >= LEVEL_UP_THRESHOLD && state.trainingLevel < LEVELS.length - 1) {
+      state.trainingLevel++;
+      state.levelSessions = 0;
+      state.checked['training'] = true;
+      saveState(state);
+      document.getElementById('levelup-title').textContent = `Level ${state.trainingLevel + 1} unlocked`;
+      showPage('levelup');
+      return;
+    }
+  }
+  state.checked['training'] = true;
+  saveState(state);
+  showPage('habits');
+  renderHabits();
+}
+
+function render() { renderHabits(); }
+setInterval(checkDayRollover, 15000);
+checkDayRollover();
+showPage('habits');
+</script>
+</body>
+</html>
